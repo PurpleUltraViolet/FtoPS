@@ -1,9 +1,9 @@
 import sys
 import re
 
-ELEMENT_TYPES = {'scene': (1.5, 0.8), 'action': (1.5, 0.8), 'char': (3.5, 0.8),
-    'paren': (3, 2.8), 'dialogue': (2.5, 2), 'trans': (5.5, 0.8),
-    'center': (1.5, 0.8)}
+ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1), 'char': (3.5, 1),
+    'paren': (3, 3), 'dialogue': (2.5, 2.5), 'trans': (5.5, 1),
+    'center': (1.5, 1)}
 
 class ScreenplayElement:
     def reformat(self):
@@ -13,7 +13,7 @@ class ScreenplayElement:
         for i, s in enumerate(stxt):
             if shouldbreak: break
             if len(s) > self.width * 10:
-                for x in range(int(self.width * 10 - 1), 0, -1):
+                for x in range(int(self.width * 10), 0, -1):
                     if(s[x].isspace()):
                         stxt[i] = s[:x] + '\n' + s[x + 1:]
                         self.txt = '\n'.join(stxt)
@@ -42,7 +42,7 @@ def readfile(ifile):
     # Clean up linebreaks so there's no more than one blank line at any point
     f = re.sub('\n{3,}', '\n\n', f)
     # Remove sections and synopses
-    f = re.sub('\n[#=].*', '', f)
+    f = re.sub('\n[#=][^=]*', '', f)
     # Remove notes
     f = re.sub(r'([^\\]|^)\[\[.*?[^\\]\]\]', r'\1', f, flags=re.DOTALL)
     # Remove markdown formatting
@@ -71,16 +71,16 @@ def readfile(ifile):
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0.upper(), 'scene'))
         # Transition
-        elif (nsf0.upper() == nsf0 and nsf0[-3:] == 'TO:' and
+        elif (nsf0.upper() == nsf0 and nsf0[-3:] == 'TO:' and used != [] and
                 used[-1] == '' and sf[1] == '') or (nsf0[0] == '>' and
                 nsf0[-1] != '<'):
             if (nsf0[0] == '>' and nsf0[-1] != '<') or nsf0[0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0, 'trans'))
         # Character
-        elif (nsf0[0] == '@' or (re.sub(charextremover, '', nsf0[0].upper()) ==
-                re.sub(charextremover, '', nsf0[0]) and sf[1] != '' and
-                used[-1] == '')):
+        elif (nsf0[0] == '@' or (re.sub(charextremover, '', nsf0.upper()) ==
+                re.sub(charextremover, '', nsf0) and sf[1] != '' and
+                used != [] and used[-1] == '')):
             if nsf0[0] == '@' or nsf0[0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0, 'char'))
@@ -106,7 +106,7 @@ def readfile(ifile):
             elements.append(ScreenplayElement(nsf0, 'center'))
         # Action
         else:
-            if osf0[0] == '\\':
+            if osf0[0] == '\\' or osf0[0] == '!':
                 osf0 = osf0[1:]
             elements.append(ScreenplayElement(osf0, 'action'))
 
