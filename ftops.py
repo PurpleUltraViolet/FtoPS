@@ -38,13 +38,17 @@ class ScreenplayElement:
 def readfile(ifile):
     f = ifile.read()
     # Remove boneyard
-    f = re.sub(r'([^\\]|^)/\*.*?[^\\]\*/', '', f, flags=re.DOTALL)
+    f = re.sub(r'([^\\]|^)/\*.*?[^\\]\*/', r'\1', f, flags=re.DOTALL)
     # Clean up linebreaks so there's no more than one blank line at any point
     f = re.sub('\n{3,}', '\n\n', f)
     # Remove sections and synopses
     f = re.sub('\n[#=].*', '', f)
     # Remove notes
-    f = re.sub(r'([^\\]|^)\[\[.*?\]\]', '', f, flags=re.DOTALL)
+    f = re.sub(r'([^\\]|^)\[\[.*?[^\\]\]\]', r'\1', f, flags=re.DOTALL)
+    # Remove markdown formatting
+    f = re.sub(r'^[\*_]+(.*?[^\\])[\*_]+', r'\1', f)
+    f = re.sub(r'([^\\])[\*_]+(.*?[^\\])[\*_]+', r'\1\2', f)
+    f = re.sub(r'[\\](.)', r'\1', f)
 
     elements = []
     sf = f.split('\n')
@@ -81,11 +85,12 @@ def readfile(ifile):
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0, 'char'))
         # Parenthetical
-        elif (nsf0[0] == '(' and nsf0[-1] == ')' and
+        elif (nsf0[0] == '(' and nsf0[-1] == ')' and elements != [] and
                 (elements[-1].t == 'char' or elements[-1].t == 'dialogue')):
             elements.append(ScreenplayElement(nsf0, 'paren'))
         # Dialogue
-        elif elements[-1].t == 'char' or elements[-1].t == 'paren':
+        elif elements != [] and (elements[-1].t == 'char' or
+                elements[-1].t == 'paren'):
             d = ''
             while sf[0] != '' and (sf[0][0] != '(' and sf[0][0] != ')'):
                 sf[0] = sf[0].lstrip().rstrip()
