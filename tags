@@ -6,9 +6,10 @@
 !_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
 !_TAG_PROGRAM_URL	https://ctags.io/	/official site/
 !_TAG_PROGRAM_VERSION	0.0.0	/a3c87ab5/
-ELEMENT_TYPES	ftops.py	/^ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1), 'char': (3.5, 1),$/;"	v
+ELEMENT_TYPES	ftops.py	/^ELEMENT_TYPES = {'scene': (1.5, 0.8), 'action': (1.5, 0.8), 'char': (3.5, 0.8),$/;"	v
 FtoPS	README.md	/^# FtoPS$/;"	c
 ScreenplayElement	ftops.py	/^class ScreenplayElement:$/;"	c
 __init__	ftops.py	/^    def __init__(self, txt, t):$/;"	m	class:ScreenplayElement
 main	ftops.py	/^def main():$/;"	f
+readfile	ftops.py	/^def readfile(ifile):$/;"	f
 reformat	ftops.py	/^    def reformat(self):$/;"	m	class:ScreenplayElement

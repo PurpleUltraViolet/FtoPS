@@ -1,12 +1,14 @@
 import sys
 import re
 
-ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1), 'char': (3.5, 1),
-    'paren': (3, 3), 'dialogue': (2.5, 2.5), 'trans': (5.5, 1)}
+ELEMENT_TYPES = {'scene': (1.5, 0.8), 'action': (1.5, 0.8), 'char': (3.5, 0.8),
+    'paren': (3, 2.8), 'dialogue': (2.5, 2), 'trans': (5.5, 0.8),
+    'center': (1.5, 0.8)}
 
 class ScreenplayElement:
     def reformat(self):
         stxt = self.txt.split('\n')
+        # Wrap words, if fails insert hyphen
         shouldbreak = False
         for i, s in enumerate(stxt):
             if shouldbreak: break
@@ -33,6 +35,80 @@ class ScreenplayElement:
         self.width = 8.5 - self.lmargin - self.rmargin
         self.reformat()
 
+def readfile(ifile):
+    f = ifile.read()
+    # Remove boneyard
+    f = re.sub(r'([^\\]|^)/\*.*?[^\\]\*/', '', f, flags=re.DOTALL)
+    # Clean up linebreaks so there's no more than one blank line at any point
+    f = re.sub('\n{3,}', '\n\n', f)
+    # Remove sections and synopses
+    f = re.sub('\n[#=].*', '', f)
+    # Remove notes
+    f = re.sub(r'([^\\]|^)\[\[.*?\]\]', '', f, flags=re.DOTALL)
+
+    elements = []
+    sf = f.split('\n')
+    used = []
+    # check for FADE IN: line
+    if sf[0].lower() == 'fade in:' or sf[0].lower() == 'fade in':
+        elements.append(ScreenplayElement('FADE IN:', 'action'))
+        used.append(sf.pop(0))
+
+    sceneregex = re.compile(r'^(\.[^\.]|int|ext|est|int\./ext|int/ext|i/e)')
+    charextremover = re.compile(r'\(.*\)$')
+    while len(sf) > 0:
+        osf0 = sf[0].rstrip()
+        nsf0 = osf0.lstrip()
+        if nsf0 == '':
+            elements.append(ScreenplayElement('', 'action'))
+        # Scene heading
+        elif re.match(sceneregex, nsf0.lower()) != None and sf[1] == '':
+            if nsf0[0] == '.' or nsf0[0] == '\\':
+                nsf0 = nsf0[1:].lstrip()
+            elements.append(ScreenplayElement(nsf0.upper(), 'scene'))
+        # Transition
+        elif (nsf0.upper() == nsf0 and nsf0[-3:] == 'TO:' and
+                used[-1] == '' and sf[1] == '') or (nsf0[0] == '>' and
+                nsf0[-1] != '<'):
+            if (nsf0[0] == '>' and nsf0[-1] != '<') or nsf0[0] == '\\':
+                nsf0 = nsf0[1:].lstrip()
+            elements.append(ScreenplayElement(nsf0, 'trans'))
+        # Character
+        elif (nsf0[0] == '@' or (re.sub(charextremover, '', nsf0[0].upper()) ==
+                re.sub(charextremover, '', nsf0[0]) and sf[1] != '' and
+                used[-1] == '')):
+            if nsf0[0] == '@' or nsf0[0] == '\\':
+                nsf0 = nsf0[1:].lstrip()
+            elements.append(ScreenplayElement(nsf0, 'char'))
+        # Parenthetical
+        elif (nsf0[0] == '(' and nsf0[-1] == ')' and
+                (elements[-1].t == 'char' or elements[-1].t == 'dialogue')):
+            elements.append(ScreenplayElement(nsf0, 'paren'))
+        # Dialogue
+        elif elements[-1].t == 'char' or elements[-1].t == 'paren':
+            d = ''
+            while sf[0] != '' and (sf[0][0] != '(' and sf[0][0] != ')'):
+                sf[0] = sf[0].lstrip().rstrip()
+                if sf[0][0] == '\\':
+                    nsf0 = nsf0[1:].lstrip()
+                d = d + sf[0]
+                used.append(sf.pop(0))
+            sf.insert(0, used.pop())
+            elements.append(ScreenplayElement(d, 'dialogue'))
+        # Centered
+        elif nsf0[0] == '>' and nsf0[-1] == '<':
+            nsf0 = nsf0[1:-1].lstrip().rstrip()
+            elements.append(ScreenplayElement(nsf0, 'center'))
+        # Action
+        else:
+            if osf0[0] == '\\':
+                osf0 = osf0[1:]
+            elements.append(ScreenplayElement(osf0, 'action'))
+
+        used.append(sf.pop(0))
+
+    return elements
+
 def main():
     ofile = None
     ifile = None
@@ -54,6 +130,11 @@ def main():
         except:
             print('Failed to open output file ' + sys.argv[2], file=sys.stderr)
             return 1
+
+    elements = readfile(ifile)
+    for element in elements:
+        for line in element.txt.split('\n'):
+            ofile.write(' ' * int((element.lmargin - 1.5) * 10) + line + '\n')
 
     ifile.close()
     ofile.close()
