@@ -38,13 +38,16 @@ class ScreenplayElement:
 def readfile(ifile):
     f = ifile.read()
     # Remove boneyard
-    f = re.sub(r'([^\\]|^)/\*.*?[^\\]\*/', r'\1', f, flags=re.DOTALL)
+    f = re.sub(r'^/\*.*?[^\\]\*/', r'', f, flags=re.DOTALL)
+    f = re.sub(r'([^\\])/\*.*?[^\\]\*/', r'\1', f, flags=re.DOTALL)
     # Clean up linebreaks so there's no more than one blank line at any point
     f = re.sub('\n{3,}', '\n\n', f)
     # Remove sections and synopses
-    f = re.sub('\n[#=][^=]*', '', f)
+    f = re.sub('\n#.*', '', f)
+    f = re.sub('(?:\n|^)=(?!==).*', '', f)
     # Remove notes
-    f = re.sub(r'([^\\]|^)\[\[.*?[^\\]\]\]', r'\1', f, flags=re.DOTALL)
+    f = re.sub(r'^\[\[.*?[^\\]\]\]', r'', f, flags=re.DOTALL)
+    f = re.sub(r'([^\\])\[\[.*?[^\\]\]\]', r'\1', f, flags=re.DOTALL)
     # Remove markdown formatting
     f = re.sub(r'^[\*_]+(.*?[^\\])[\*_]+', r'\1', f)
     f = re.sub(r'([^\\])[\*_]+(.*?[^\\])[\*_]+', r'\1\2', f)
@@ -53,11 +56,6 @@ def readfile(ifile):
     elements = []
     sf = f.split('\n')
     used = []
-    # check for FADE IN: line
-    if sf[0].lower() == 'fade in:' or sf[0].lower() == 'fade in':
-        elements.append(ScreenplayElement('FADE IN:', 'action'))
-        used.append(sf.pop(0))
-
     sceneregex = re.compile(r'^(\.[^\.]|int|ext|est|int\./ext|int/ext|i/e)')
     charextremover = re.compile(r'\(.*\)$')
     while len(sf) > 0:
@@ -91,12 +89,16 @@ def readfile(ifile):
         # Dialogue
         elif elements != [] and (elements[-1].t == 'char' or
                 elements[-1].t == 'paren'):
-            d = ''
+            sf[0] = sf[0].lstrip().rstrip()
+            if sf[0][0] == '\\':
+                nsf0 = nsf0[1:].lstrip()
+            d = sf[0]
+            used.append(sf.pop(0))
             while sf[0] != '' and (sf[0][0] != '(' and sf[0][0] != ')'):
                 sf[0] = sf[0].lstrip().rstrip()
                 if sf[0][0] == '\\':
                     nsf0 = nsf0[1:].lstrip()
-                d = d + sf[0]
+                d += '\n' + sf[0]
                 used.append(sf.pop(0))
             sf.insert(0, used.pop())
             elements.append(ScreenplayElement(d, 'dialogue'))
@@ -114,6 +116,37 @@ def readfile(ifile):
 
     return elements
 
+def elementstops(elements):
+    ps = (b'%!PS-Adobe-3.0\n'
+          b'/Courier findfont\n'
+          b'0 dict copy begin\n'
+          b'/Encoding ISOLatin1Encoding def\n'
+          b'/Courier-latin /FontName def\n'
+          b'currentdict end\n'
+          b'dup /FID undef\n'
+          b'/Courier-latin exch definefont pop\n'
+          b'/Courier-latin 12 selectfont\n'
+          b'%%Page: 1 1\n')
+    line = 0
+    page = 1
+    for element in elements:
+        if element.t == 'action' and element.txt == '===':
+            page += 1
+            ps += b'showpage\n%%Page: ' + str(page).encode('latin_1') + b' ' \
+                  + str(page).encode('latin_1') + b'\n'
+            line = 0
+            continue
+        if element.txt == '':
+            line += 1
+            continue
+        for l in element.txt.split('\n'):
+            ps += str(int(element.lmargin * 72)).encode('latin_1') + b' ' \
+                  + str(708 - line * 12).encode('latin_1') \
+                  + b' moveto\n(' + l.encode('latin_1') + b') show\n'
+            line += 1
+    ps += b'showpage\n'
+    return ps
+
 def main():
     ofile = None
     ifile = None
@@ -128,18 +161,16 @@ def main():
             return 1
 
     if(len(sys.argv) < 3):
-        ofile = sys.stdout
+        ofile = sys.stdout.buffer
     else:
         try:
-            ofile = open(sys.argv[2], 'w')
+            ofile = open(sys.argv[2], 'wb')
         except:
             print('Failed to open output file ' + sys.argv[2], file=sys.stderr)
             return 1
 
     elements = readfile(ifile)
-    for element in elements:
-        for line in element.txt.split('\n'):
-            ofile.write(' ' * int((element.lmargin - 1.5) * 10) + line + '\n')
+    ofile.write(elementstops(elements))
 
     ifile.close()
     ofile.close()
