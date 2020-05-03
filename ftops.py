@@ -171,8 +171,89 @@ def elementstops(tpage, elements):
           b'/Courier-latin 12 selectfont\n'
           b'/PageSize [612 792]\n'
           b'%%Page: 1 1\n')
-    line = 0
+    centertitle = ''
+    righttitle = ''
+    lefttitle = ''
+    try:
+        centertitle += tpage['Title'] + '\n'
+    except:
+        pass
+    try:
+        centertitle += tpage['Credit'] + '\n'
+    except:
+        pass
+    try:
+        centertitle += tpage['Author'] + '\n'
+    except:
+        try:
+            centertitle += tpage['Authors'] + '\n'
+        except:
+            pass
+    try:
+        centertitle += tpage['Source'] + '\n'
+    except:
+        pass
+    try:
+        lefttitle += tpage['Contact'] + '\n'
+    except:
+        pass
+    try:
+        lefttitle += tpage['Draft date'] + '\n'
+    except:
+        pass
+    try:
+        lefttitle += tpage['Copyright'] + '\n'
+    except:
+        pass
+    try:
+        righttitle += tpage['Notes'] + '\n'
+    except:
+        pass
+    
     page = 1
+    lineno = 0
+    if centertitle:
+        for line in centertitle.split('\n'):
+            oline = line
+            line = line.replace('(', '\\(')
+            line = line.replace(')', '\\)')
+            line = line.replace('\\\\(', '\\(')
+            line = line.replace('\\\\)', '\\)')
+            ps += str(int(((pwidth - (len(oline) / 10)) / 2 + plmargin) * \
+                    72)).encode('latin_1') + b' ' + \
+                    str((50 - lineno) * 12).encode('latin_1') + b' moveto\n' + \
+                    b'(' + line.encode('latin_1') + b') show\n'
+            lineno += 1
+    lineno = 0
+    if lefttitle:
+        for line in lefttitle.split('\n')[::-1]:
+            line = line.replace('(', '\\(')
+            line = line.replace(')', '\\)')
+            line = line.replace('\\\\(', '\\(')
+            line = line.replace('\\\\)', '\\)')
+            ps += str(int(plmargin * 72)).encode('latin_1') + b' ' + \
+                    str((6 + lineno) * 12).encode('latin_1') + b' moveto\n' + \
+                    b'(' + line.encode('latin_1') + b') show\n'
+            lineno += 1
+    if righttitle:
+        for line in righttitle.split('\n')[::-1]:
+            oline = line
+            line = line.replace('(', '\\(')
+            line = line.replace(')', '\\)')
+            line = line.replace('\\\\(', '\\(')
+            line = line.replace('\\\\)', '\\)')
+            ps += str(int(((plmargin + pwidth) - len(oline) / 10) * 72)) \
+                    .encode('latin_1') + b' ' + str((6 + lineno) * 12) \
+                    .encode('latin_1') + b' moveto\n' + \
+                    b'(' + line.encode('latin_1') + b') show\n'
+            lineno += 1
+
+    if centertitle or lefttitle or righttitle:
+        page += 1
+        ps += b'showpage\n%%Page: ' + str(page).encode('latin_1') + b' ' \
+              + str(page).encode('latin_1') + b'\n'
+
+    line = 0
     header = False
     pageno = 1
     skipblank = False
