@@ -19,3 +19,7 @@ outside the latin1 characterset.
 ## Why PostScript?
 
 Because I couldn't wrap my head around PDF.
+
+## Installation Instructions
+
+Install with `python -m pip install ftops`, then run with `ftops`

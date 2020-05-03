@@ -8,6 +8,7 @@
 !_TAG_PROGRAM_VERSION	0.0.0	/a3c87ab5/
 ELEMENT_TYPES	ftops.py	/^ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1), 'char': (3.5, 1),$/;"	v
 FtoPS	README.md	/^# FtoPS$/;"	c
+Installation Instructions	README.md	/^## Installation Instructions$/;"	s
 ScreenplayElement	ftops.py	/^class ScreenplayElement:$/;"	c
 What isn't supported	README.md	/^## What isn't supported$/;"	s
 Why PostScript?	README.md	/^## Why PostScript?$/;"	s
