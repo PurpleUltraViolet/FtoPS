@@ -10,7 +10,7 @@ ELEMENT_TYPES	ftops.py	/^ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1),
 FtoPS	README.md	/^# FtoPS$/;"	c
 ScreenplayElement	ftops.py	/^class ScreenplayElement:$/;"	c
 __init__	ftops.py	/^    def __init__(self, txt, t):$/;"	m	class:ScreenplayElement
-elementstops	ftops.py	/^def elementstops(elements):$/;"	f
+elementstops	ftops.py	/^def elementstops(tpage, elements):$/;"	f
 main	ftops.py	/^def main():$/;"	f
 readfile	ftops.py	/^def readfile(ifile):$/;"	f
 reformat	ftops.py	/^    def reformat(self):$/;"	m	class:ScreenplayElement

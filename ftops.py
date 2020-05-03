@@ -37,6 +37,41 @@ class ScreenplayElement:
 
 def readfile(ifile):
     f = ifile.read()
+
+    # Title page
+    tpagetxt = f.split('\n\n')[0]
+    tpagekeyr = re.compile(r'([^:]+):\s*(.*)')
+    tpagevalr = re.compile(r'(?:\s{3,}|\t)(.+)')
+
+    tpage = {}
+    tpageit = iter(tpagetxt.split('\n'))
+    try:
+        line = next(tpageit)
+        while True:
+            keymatch = tpagekeyr.match(line)
+            if not keymatch:
+                break
+            key, value = keymatch.groups()
+            if value:
+                tpage.setdefault(key, []).append(value.strip())
+                line = next(tpageit)
+            else:
+                for line in tpageit:
+                    valmatch = tpagevalr.match(line)
+                    if not valmatch:
+                        break
+                    tpage.setdefault(key, []).append(valmatch[1].strip())
+                else:
+                    break
+    except StopIteration:
+        pass
+
+    for key in tpage:
+        tpage[key] = '\n'.join(tpage[key])
+
+    if tpage != {}:
+        f = '\n\n'.join(f.split('\n\n')[1:])
+
     # Remove boneyard
     f = re.sub(r'^/\*.*?[^\\]\*/', r'', f, flags=re.DOTALL)
     f = re.sub(r'([^\\])/\*.*?[^\\]\*/', r'\1', f, flags=re.DOTALL)
@@ -53,6 +88,9 @@ def readfile(ifile):
     f = re.sub(r'([^\\])[\*_]+(.*?[^\\])[\*_]+', r'\1\2', f)
     f = re.sub(r'[\\](.)', r'\1', f)
 
+    while f[0].isspace():
+        f = f[1:]
+
     elements = []
     sf = f.split('\n')
     used = []
@@ -64,21 +102,23 @@ def readfile(ifile):
         if nsf0 == '':
             elements.append(ScreenplayElement('', 'action'))
         # Scene heading
-        elif re.match(sceneregex, nsf0.lower()) != None and sf[1] == '':
+        elif (re.match(sceneregex, nsf0.lower()) != None and len(sf) > 1 and
+                sf[1] == ''):
             if nsf0[0] == '.' or nsf0[0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0.upper(), 'scene'))
         # Transition
-        elif (nsf0.upper() == nsf0 and nsf0[-3:] == 'TO:' and used != [] and
-                used[-1] == '' and sf[1] == '') or (nsf0[0] == '>' and
-                nsf0[-1] != '<'):
+        elif ((nsf0.upper() == nsf0 and nsf0[-3:] == 'TO:' and used != [] and
+                used[-1] == '' and len(sf) > 1 and sf[1] == '')
+                or (nsf0[0] == '>' and nsf0[-1] != '<')):
             if (nsf0[0] == '>' and nsf0[-1] != '<') or nsf0[0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0, 'trans'))
         # Character
         elif (nsf0[0] == '@' or (re.sub(charextremover, '', nsf0.upper()) ==
-                re.sub(charextremover, '', nsf0) and sf[1] != '' and
-                used != [] and used[-1] == '' and nsf0[0].isalpha())):
+                re.sub(charextremover, '', nsf0) and len(sf) > 1 and
+                sf[1] != '' and used != [] and used[-1] == '' and
+                nsf0[0].isalpha())):
             if nsf0[0] == '@' or nsf0[0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0, 'char'))
@@ -114,9 +154,9 @@ def readfile(ifile):
 
         used.append(sf.pop(0))
 
-    return elements
+    return tpage, elements
 
-def elementstops(elements):
+def elementstops(tpage, elements):
     plmargin = ELEMENT_TYPES['action'][0]
     prmargin = ELEMENT_TYPES['action'][1]
     pwidth = 8.5 - plmargin - prmargin
@@ -248,8 +288,8 @@ def main():
             print('Failed to open output file ' + sys.argv[2], file=sys.stderr)
             return 1
 
-    elements = readfile(ifile)
-    ofile.write(elementstops(elements))
+    tpage, elements = readfile(ifile)
+    ofile.write(elementstops(tpage, elements))
 
     ifile.close()
     ofile.close()
