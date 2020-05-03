@@ -194,15 +194,15 @@ def elementstops(tpage, elements):
     except:
         pass
     try:
+        lefttitle += tpage['Copyright'] + '\n'
+    except:
+        pass
+    try:
         lefttitle += tpage['Contact'] + '\n'
     except:
         pass
     try:
         lefttitle += tpage['Draft date'] + '\n'
-    except:
-        pass
-    try:
-        lefttitle += tpage['Copyright'] + '\n'
     except:
         pass
     try:
@@ -219,7 +219,7 @@ def elementstops(tpage, elements):
             line = line.replace(')', '\\)')
             line = line.replace('\\\\(', '\\(')
             line = line.replace('\\\\)', '\\)')
-            ps += str(int(((pwidth - (len(oline) / 10)) / 2 + plmargin) * \
+            ps += str(int(((8.5 - (len(oline) / 10)) / 2) * \
                     72)).encode('latin_1') + b' ' + \
                     str((50 - lineno) * 12).encode('latin_1') + b' moveto\n' + \
                     b'(' + line.encode('latin_1') + b') show\n'
