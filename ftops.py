@@ -140,6 +140,8 @@ def elementstops(elements):
     for i, element in enumerate(elements):
         element.txt = element.txt.replace('(', '\\(')
         element.txt = element.txt.replace(')', '\\)')
+        element.txt = element.txt.replace('\\\\(', '\\(')
+        element.txt = element.txt.replace('\\\\)', '\\)')
         if element.t == 'action' and element.txt[:3] == '===':
             nextlinepagebreak = True
         if nextlinepagebreak:
@@ -165,6 +167,8 @@ def elementstops(elements):
         skipblank = False
         if element.t == 'scene':
             header = True
+        if element.t == 'center' and element.txt == '(MORE)':
+            nextlinepagebreak = True
         if element.t == 'center':
             for l in element.txt.split('\n'):
                 ps += str(int((plmargin + ((pwidth - (len(l) * 5 / 36)) / 2)) \
@@ -174,14 +178,41 @@ def elementstops(elements):
                 line += 1
             continue
         for j, l in enumerate(element.txt.split('\n')):
-            if line >= 52 and len(element.txt.split('\n')) - j <= 57 - line:
-                nextlinepagebreak = True
-            if line >= 57:
-                elements.pop(i)
-                elements.insert(i + 1, ScreenplayElement('\n'.join(
-                        element.txt.split('\n')[j:]), element.t))
-                nextlinepagebreak = True
-                break
+            if element.t not in {'char', 'paren', 'dialogue', 'scene'}:
+                if line >= 52 and len(element.txt.split('\n')) - j <= 57 - line:
+                    nextlinepagebreak = True
+                if line >= 57:
+                    elements.insert(i + 1, ScreenplayElement('\n'.join(
+                            element.txt.split('\n')[j:]), element.t))
+                    nextlinepagebreak = True
+                    break
+            elif element.t not in {'char', 'scene'}:
+                if line >= 55 and (
+                        len(element.txt.split('\n')) - j >= 57 - line
+                        or elements[i + 1].t != 'paren'):
+                    elements.pop(i)
+                    elements.insert(i + 1, ScreenplayElement('(MORE)',
+                            'center'))
+                    for e in elements[i::-1]:
+                        if e.t == 'char':
+                            if (len(e.txt.rstrip()) >= 10 and
+                                    e.txt.rstrip()[-10:].upper() ==
+                                    '\\(CONT\'D\\)'):
+                                elements.insert(i + 2,
+                                        ScreenplayElement(e.txt, e.t))
+                            else:
+                                elements.insert(i + 2,
+                                        ScreenplayElement(e.txt + ' (CONT\'D)',
+                                            e.t))
+                            break
+                    elements.insert(i + 3, ScreenplayElement('\n'.join(
+                            element.txt.split('\n')[j:]), element.t))
+                    #elements.insert(i + 4, ScreenplayElement('', 'action'))
+                    break
+            elif line >= 52:
+                    nextlinepagebreak = True
+                    elements.insert(i + 1, element)
+                    break
             ps += str(int(element.lmargin * 72)).encode('latin_1') + b' ' \
                   + str(708 - line * 12).encode('latin_1') \
                   + b' moveto\n(' + l.encode('latin_1') + b') show\n'
