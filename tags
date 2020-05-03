@@ -9,6 +9,8 @@
 ELEMENT_TYPES	ftops.py	/^ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1), 'char': (3.5, 1),$/;"	v
 FtoPS	README.md	/^# FtoPS$/;"	c
 ScreenplayElement	ftops.py	/^class ScreenplayElement:$/;"	c
+What isn't supported	README.md	/^## What isn't supported$/;"	s
+Why PostScript?	README.md	/^## Why PostScript?$/;"	s
 __init__	ftops.py	/^    def __init__(self, txt, t):$/;"	m	class:ScreenplayElement
 elementstops	ftops.py	/^def elementstops(tpage, elements):$/;"	f
 main	ftops.py	/^def main():$/;"	f
