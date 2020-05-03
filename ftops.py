@@ -78,7 +78,7 @@ def readfile(ifile):
         # Character
         elif (nsf0[0] == '@' or (re.sub(charextremover, '', nsf0.upper()) ==
                 re.sub(charextremover, '', nsf0) and sf[1] != '' and
-                used != [] and used[-1] == '')):
+                used != [] and used[-1] == '' and nsf0[0].isalpha())):
             if nsf0[0] == '@' or nsf0[0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             elements.append(ScreenplayElement(nsf0, 'char'))
@@ -117,6 +117,9 @@ def readfile(ifile):
     return elements
 
 def elementstops(elements):
+    plmargin = ELEMENT_TYPES['action'][0]
+    prmargin = ELEMENT_TYPES['action'][1]
+    pwidth = 8.5 - plmargin - prmargin
     ps = (b'%!PS-Adobe-3.0\n'
           b'/Courier findfont\n'
           b'0 dict copy begin\n'
@@ -126,24 +129,69 @@ def elementstops(elements):
           b'dup /FID undef\n'
           b'/Courier-latin exch definefont pop\n'
           b'/Courier-latin 12 selectfont\n'
+          b'/PageSize [612 792]\n'
           b'%%Page: 1 1\n')
     line = 0
     page = 1
-    for element in elements:
-        if element.t == 'action' and element.txt == '===':
+    header = False
+    pageno = 1
+    skipblank = False
+    nextlinepagebreak = False
+    for i, element in enumerate(elements):
+        element.txt = element.txt.replace('(', '\\(')
+        element.txt = element.txt.replace(')', '\\)')
+        if element.t == 'action' and element.txt[:3] == '===':
+            nextlinepagebreak = True
+        if nextlinepagebreak:
             page += 1
+            if header:
+                htext = str(pageno) + '.'
+                ps += str(int((8.5 - prmargin) * 72 \
+                      - len(htext) * 10)).encode('latin_1') \
+                      + b' 744 moveto\n(' + htext.encode('latin_1') + b') show\n'
+                pageno += 1
             ps += b'showpage\n%%Page: ' + str(page).encode('latin_1') + b' ' \
                   + str(page).encode('latin_1') + b'\n'
+            skipblank = True
             line = 0
+            nextlinepagebreak = False
+        if element.t == 'action' and element.txt[:3] == '===':
             continue
         if element.txt == '':
+            if skipblank:
+                continue
             line += 1
             continue
-        for l in element.txt.split('\n'):
+        skipblank = False
+        if element.t == 'scene':
+            header = True
+        if element.t == 'center':
+            for l in element.txt.split('\n'):
+                ps += str(int((plmargin + ((pwidth - (len(l) * 5 / 36)) / 2)) \
+                      * 72)).encode('latin_1') + b' ' \
+                      + str(708 - line * 12).encode('latin_1') \
+                      + b' moveto\n(' + l.encode('latin_1') + b') show\n'
+                line += 1
+            continue
+        for j, l in enumerate(element.txt.split('\n')):
+            if line >= 52 and len(element.txt.split('\n')) - j <= 57 - line:
+                nextlinepagebreak = True
+            if line >= 57:
+                elements.pop(i)
+                elements.insert(i + 1, ScreenplayElement('\n'.join(
+                        element.txt.split('\n')[j:]), element.t))
+                nextlinepagebreak = True
+                break
             ps += str(int(element.lmargin * 72)).encode('latin_1') + b' ' \
                   + str(708 - line * 12).encode('latin_1') \
                   + b' moveto\n(' + l.encode('latin_1') + b') show\n'
             line += 1
+    page += 1
+    if header:
+        htext = str(pageno) + '.'
+        ps += str(int((8.5 - prmargin) * 72 \
+              - len(htext) * 10)).encode('latin_1') \
+              + b' 744 moveto\n(' + htext.encode('latin_1') + b') show\n'
     ps += b'showpage\n'
     return ps
 
