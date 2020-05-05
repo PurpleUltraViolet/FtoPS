@@ -14,8 +14,14 @@ class ScreenplayElement:
             if shouldbreak: break
             if len(s) > self.width * 10:
                 for x in range(int(self.width * 10), 0, -1):
-                    if(s[x].isspace()):
+                    if s[x].isspace():
                         stxt[i] = s[:x] + '\n' + s[x + 1:]
+                        self.txt = '\n'.join(stxt)
+                        self.reformat()
+                        shouldbreak = True
+                        break
+                    elif s[x] == '-':
+                        stxt[i] = s[:x + 1] + '\n' + s[x + 1:]
                         self.txt = '\n'.join(stxt)
                         self.reformat()
                         shouldbreak = True
