@@ -7,13 +7,13 @@ ELEMENT_TYPES = {'scene': (1.5, 1), 'action': (1.5, 1), 'char': (3.5, 1),
 
 class ScreenplayElement:
     def reformat(self):
-        stxt = self.txt.split('\n')
+        stxt = list(map(str.lstrip, self.txt.split('\n')))
         # Wrap words, if fails insert hyphen
         shouldbreak = False
         for i, s in enumerate(stxt):
             if shouldbreak: break
             if len(s) > self.width * 10:
-                for x in range(int(self.width * 10), 0, -1):
+                for x in range(int(self.width * 10) - 1, -1, -1):
                     if s[x].isspace():
                         stxt[i] = s[:x] + '\n' + s[x + 1:]
                         self.txt = '\n'.join(stxt)
