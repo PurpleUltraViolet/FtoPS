@@ -81,14 +81,14 @@ def readfile(ifile):
     # Remove boneyard
     f = re.sub(r'^/\*.*?[^\\]\*/', r'', f, flags=re.DOTALL)
     f = re.sub(r'([^\\])/\*.*?[^\\]\*/', r'\1', f, flags=re.DOTALL)
-    # Clean up linebreaks so there's no more than one blank line at any point
-    f = re.sub('\n{3,}', '\n\n', f)
     # Remove sections and synopses
     f = re.sub('\n#.*', '', f)
     f = re.sub('(?:\n|^)=(?!==).*', '', f)
     # Remove notes
     f = re.sub(r'^\[\[.*?[^\\]\]\]', r'', f, flags=re.DOTALL)
     f = re.sub(r'([^\\])\[\[.*?[^\\]\]\]', r'\1', f, flags=re.DOTALL)
+    # Clean up linebreaks so there's no more than one blank line at any point
+    f = re.sub('\n{3,}', '\n\n', f)
 
     while f[0].isspace():
         f = f[1:]
