@@ -27,8 +27,8 @@ class ScreenplayElement:
                         shouldbreak = True
                         break
                 else:
-                    stxt[i] = stxt[i][:int(self.width * 10 - 2)] + '-\n' + \
-                        stxt[i][int(self.width * 10 - 2):]
+                    stxt[i] = stxt[i][:int(self.width * 10 - 1)] + '-\n' + \
+                        stxt[i][int(self.width * 10 - 1):]
                     self.txt = '\n'.join(stxt)
                     self.reformat()
                     shouldbreak = True
@@ -230,6 +230,7 @@ def elementstops(tpage, elements):
     lineno = 0
     if lefttitle:
         for line in lefttitle.split('\n')[::-1]:
+            line = line.replace('\\', '\\\\')
             line = line.replace('(', '\\(')
             line = line.replace(')', '\\)')
             line = line.replace('\\\\(', '\\(')
@@ -241,11 +242,12 @@ def elementstops(tpage, elements):
     if righttitle:
         for line in righttitle.split('\n')[::-1]:
             oline = line
+            line = line.replace('\\', '\\\\')
             line = line.replace('(', '\\(')
             line = line.replace(')', '\\)')
             line = line.replace('\\\\(', '\\(')
             line = line.replace('\\\\)', '\\)')
-            ps += str(int(((plmargin + pwidth) - len(oline) / 10) * 72)) \
+            ps += str(int(((plmargin + pwidth) - (len(oline) - 1) / 10) * 72)) \
                     .encode('latin_1') + b' ' + str((6 + lineno) * 12) \
                     .encode('latin_1') + b' moveto\n' + \
                     b'(' + line.encode('latin_1') + b') show\n'
@@ -262,6 +264,7 @@ def elementstops(tpage, elements):
     skipblank = False
     nextlinepagebreak = False
     for i, element in enumerate(elements):
+        element.txt = element.txt.replace('\\', '\\\\')
         element.txt = element.txt.replace('(', '\\(')
         element.txt = element.txt.replace(')', '\\)')
         element.txt = element.txt.replace('\\\\(', '\\(')
@@ -273,7 +276,7 @@ def elementstops(tpage, elements):
             if header:
                 htext = str(pageno) + '.'
                 ps += str(int((8.5 - prmargin) * 72 \
-                      - len(htext) * 10)).encode('latin_1') \
+                      - (len(htext) - 1) * 10)).encode('latin_1') \
                       + b' 744 moveto\n(' + htext.encode('latin_1') + b') show\n'
                 pageno += 1
             ps += b'showpage\n%%Page: ' + str(page).encode('latin_1') + b' ' \
@@ -345,7 +348,7 @@ def elementstops(tpage, elements):
     if header:
         htext = str(pageno) + '.'
         ps += str(int((8.5 - prmargin) * 72 \
-              - len(htext) * 10)).encode('latin_1') \
+              - (len(htext) - 1) * 10)).encode('latin_1') \
               + b' 744 moveto\n(' + htext.encode('latin_1') + b') show\n'
     ps += b'showpage\n'
     return ps
