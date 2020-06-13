@@ -89,10 +89,6 @@ def readfile(ifile):
     # Remove notes
     f = re.sub(r'^\[\[.*?[^\\]\]\]', r'', f, flags=re.DOTALL)
     f = re.sub(r'([^\\])\[\[.*?[^\\]\]\]', r'\1', f, flags=re.DOTALL)
-    # Remove markdown formatting
-    f = re.sub(r'^[\*_]+(.*?[^\\])[\*_]+', r'\1', f)
-    f = re.sub(r'([^\\])[\*_]+(.*?[^\\])[\*_]+', r'\1\2', f)
-    f = re.sub(r'[\\](.)', r'\1', f)
 
     while f[0].isspace():
         f = f[1:]
@@ -221,6 +217,7 @@ def elementstops(tpage, elements):
     if centertitle:
         for line in centertitle.split('\n'):
             oline = line
+            line = line.replace('\\', '\\\\')
             line = line.replace('(', '\\(')
             line = line.replace(')', '\\)')
             line = line.replace('\\\\(', '\\(')

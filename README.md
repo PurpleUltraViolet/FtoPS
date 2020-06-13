@@ -14,7 +14,7 @@ outside the latin1 characterset.
 
  - Dual Dialogue
  - Lyrics
- - The regex behind removing the emphasis markings is very weird, so there will be bugs.
+ - Emphasis formatting
 
 ## Why PostScript?
 
