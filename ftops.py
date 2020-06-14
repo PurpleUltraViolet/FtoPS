@@ -127,7 +127,7 @@ def readfile(ifile):
         # Parenthetical
         elif (nsf0[0] == '(' and nsf0[-1] == ')' and elements != [] and
                 (elements[-1].t == 'char' or elements[-1].t == 'dialogue')):
-            elements.append(ScreenplayElement(nsf0, 'paren'))
+            elements.append(ScreenplayElement(nsf0[1:-1], 'paren'))
         # Dialogue
         elif elements != [] and (elements[-1].t == 'char' or
                 elements[-1].t == 'paren'):
@@ -325,9 +325,16 @@ def elementstops(tpage, elements):
                     #elements.insert(i + 4, ScreenplayElement('', 'action'))
                     break
             elif line >= 52:
-                    nextlinepagebreak = True
-                    elements.insert(i + 1, element)
-                    break
+                nextlinepagebreak = True
+                elements.insert(i + 1, element)
+                break
+            if element.t == 'paren':
+                if j == 0:
+                    ps += (str(int((element.lmargin - 0.1) * 72)) + ' ' + \
+                           str(708 - (line * 12)) + \
+                           ' moveto\n(\\() show\n').encode('latin_1')
+                if j == len(lines) - 1:
+                    l += ')'
             l = sanitize(l)
             ps += (str(int(element.lmargin * 72)) + ' ' + str(708 - line * \
                    12) + ' moveto\n(' + l + ') show\n').encode('latin_1')
