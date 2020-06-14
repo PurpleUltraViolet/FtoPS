@@ -158,6 +158,12 @@ def readfile(ifile):
 
     return tpage, elements
 
+def sanitize(t):
+    t = t.replace('\\', '\\\\')
+    t = t.replace('(', '\\(')
+    t = t.replace(')', '\\)')
+    return t
+
 def elementstops(tpage, elements):
     plmargin = ELEMENT_TYPES['action'][0]
     prmargin = ELEMENT_TYPES['action'][1]
@@ -217,11 +223,7 @@ def elementstops(tpage, elements):
     if centertitle:
         for line in centertitle.split('\n'):
             oline = line
-            line = line.replace('\\', '\\\\')
-            line = line.replace('(', '\\(')
-            line = line.replace(')', '\\)')
-            line = line.replace('\\\\(', '\\(')
-            line = line.replace('\\\\)', '\\)')
+            line = sanitize(line)
             ps += str(int(((8.5 - (len(oline) / 10)) / 2) * \
                     72)).encode('latin_1') + b' ' + \
                     str((50 - lineno) * 12).encode('latin_1') + b' moveto\n' + \
@@ -230,11 +232,8 @@ def elementstops(tpage, elements):
     lineno = 0
     if lefttitle:
         for line in lefttitle.split('\n')[::-1]:
-            line = line.replace('\\', '\\\\')
-            line = line.replace('(', '\\(')
-            line = line.replace(')', '\\)')
-            line = line.replace('\\\\(', '\\(')
-            line = line.replace('\\\\)', '\\)')
+            oline = line
+            line = sanitize(line)
             ps += str(int(plmargin * 72)).encode('latin_1') + b' ' + \
                     str((6 + lineno) * 12).encode('latin_1') + b' moveto\n' + \
                     b'(' + line.encode('latin_1') + b') show\n'
@@ -242,11 +241,7 @@ def elementstops(tpage, elements):
     if righttitle:
         for line in righttitle.split('\n')[::-1]:
             oline = line
-            line = line.replace('\\', '\\\\')
-            line = line.replace('(', '\\(')
-            line = line.replace(')', '\\)')
-            line = line.replace('\\\\(', '\\(')
-            line = line.replace('\\\\)', '\\)')
+            line = sanitize(line)
             ps += str(int(((plmargin + pwidth) - (len(oline) - 1) / 10) * 72)) \
                     .encode('latin_1') + b' ' + str((6 + lineno) * 12) \
                     .encode('latin_1') + b' moveto\n' + \
@@ -264,11 +259,6 @@ def elementstops(tpage, elements):
     skipblank = False
     nextlinepagebreak = False
     for i, element in enumerate(elements):
-        element.txt = element.txt.replace('\\', '\\\\')
-        element.txt = element.txt.replace('(', '\\(')
-        element.txt = element.txt.replace(')', '\\)')
-        element.txt = element.txt.replace('\\\\(', '\\(')
-        element.txt = element.txt.replace('\\\\)', '\\)')
         if element.t == 'action' and element.txt[:3] == '===':
             nextlinepagebreak = True
         if nextlinepagebreak:
@@ -301,7 +291,8 @@ def elementstops(tpage, elements):
                 ps += str(int((plmargin + ((pwidth - (len(l) * 5 / 36)) / 2)) \
                       * 72)).encode('latin_1') + b' ' \
                       + str(708 - line * 12).encode('latin_1') \
-                      + b' moveto\n(' + l.encode('latin_1') + b') show\n'
+                      + b' moveto\n(' + sanitize(l).encode('latin_1') \
+                      + b') show\n'
                 line += 1
             continue
         for j, l in enumerate(element.txt.split('\n')):
@@ -317,14 +308,15 @@ def elementstops(tpage, elements):
                 if line >= 55 and (
                         len(element.txt.split('\n')) - j >= 57 - line
                         or elements[i + 1].t != 'paren'):
+                        #):
                     elements.pop(i)
                     elements.insert(i + 1, ScreenplayElement('(MORE)',
                             'center'))
                     for e in elements[i::-1]:
                         if e.t == 'char':
                             if (len(e.txt.rstrip()) >= 10 and
-                                    e.txt.rstrip()[-10:].upper() ==
-                                    '\\(CONT\'D\\)'):
+                                    e.txt.rstrip()[-8:].upper() ==
+                                    '(CONT\'D)'):
                                 elements.insert(i + 2,
                                         ScreenplayElement(e.txt, e.t))
                             else:
@@ -340,6 +332,7 @@ def elementstops(tpage, elements):
                     nextlinepagebreak = True
                     elements.insert(i + 1, element)
                     break
+            l = sanitize(l)
             ps += str(int(element.lmargin * 72)).encode('latin_1') + b' ' \
                   + str(708 - line * 12).encode('latin_1') \
                   + b' moveto\n(' + l.encode('latin_1') + b') show\n'

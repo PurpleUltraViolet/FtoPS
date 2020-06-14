@@ -16,3 +16,4 @@ elementstops	ftops.py	/^def elementstops(tpage, elements):$/;"	f
 main	ftops.py	/^def main():$/;"	f
 readfile	ftops.py	/^def readfile(ifile):$/;"	f
 reformat	ftops.py	/^    def reformat(self):$/;"	m	class:ScreenplayElement
+sanitize	ftops.py	/^def sanitize(t):$/;"	f
