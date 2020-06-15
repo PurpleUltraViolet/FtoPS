@@ -225,9 +225,9 @@ def elementstops(tpage, elements):
         for line in centertitle.split('\n'):
             oline = line
             line = sanitize(line)
-            ps += (str(int(((8.5 - (len(oline) / 10)) / 2) * 72)) + ' ' + \
-                   str((50 - lineno) * 12) + ' moveto\n' + '(' + line + \
-                   ') show\n').encode('latin_1')
+            ps += (str(int((((pwidth - (len(oline) / 10)) / 2) + plmargin) * \
+                   72)) + ' ' + str((50 - lineno) * 12) + ' moveto\n' + '(' + \
+                   line + ') show\n').encode('latin_1')
             lineno += 1
     lineno = 0
     if lefttitle:
