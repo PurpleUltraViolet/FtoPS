@@ -131,22 +131,23 @@ def readfile(ifile):
         # Dialogue
         elif elements != [] and (elements[-1].t == 'char' or
                 elements[-1].t == 'paren'):
-            sf[0] = sf[0].lstrip().rstrip()
+            sf[0] = sf[0].strip()
             if sf[0][0] == '\\':
                 nsf0 = nsf0[1:].lstrip()
             d = sf[0]
             used.append(sf.pop(0))
-            while sf[0] != '' and (sf[0][0] != '(' and sf[0][0] != ')'):
-                sf[0] = sf[0].lstrip().rstrip()
+            while sf[0] != '' and not (sf[0].strip()[0] == '(' and
+                    sf[0].strip()[-1] == ')'):
+                sf[0] = sf[0].strip()
                 if sf[0][0] == '\\':
-                    nsf0 = nsf0[1:].lstrip()
+                    sf[0] = sf[0][1:].lstrip()
                 d += '\n' + sf[0]
                 used.append(sf.pop(0))
             sf.insert(0, used.pop())
             elements.append(ScreenplayElement(d, 'dialogue'))
         # Centered
         elif nsf0[0] == '>' and nsf0[-1] == '<':
-            nsf0 = nsf0[1:-1].lstrip().rstrip()
+            nsf0 = nsf0[1:-1].strip()
             elements.append(ScreenplayElement(nsf0, 'center'))
         # Action
         else:
@@ -305,7 +306,6 @@ def elementstops(tpage, elements):
                 if line >= 55 and (
                         len(element.txt.split('\n')) - j >= 57 - line
                         or elements[i + 1].t != 'paren'):
-                    elements.pop(i)
                     elements.insert(i + 1, ScreenplayElement('(MORE)',
                             'center'))
                     for e in elements[i::-1]:
