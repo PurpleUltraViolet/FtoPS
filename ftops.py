@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import re
 
@@ -43,6 +44,7 @@ class ScreenplayElement:
 
 def readfile(ifile):
     f = ifile.read()
+    f.strip()
 
     # Title page
     tpagetxt = f.split('\n\n')[0]
@@ -225,24 +227,24 @@ def elementstops(tpage, elements):
         for line in centertitle.split('\n'):
             oline = line
             line = sanitize(line)
-            ps += (str(int((((pwidth - (len(oline) / 10)) / 2) + plmargin) * \
-                   72)) + ' ' + str((50 - lineno) * 12) + ' moveto\n' + '(' + \
-                   line + ') show\n').encode('latin_1')
+            ps += (str(round(((pwidth - (len(oline) / 10)) / 2) + \
+                   plmargin, 1) * 72) + ' ' + str((50 - lineno) * 12) + \
+                   ' moveto\n' + '(' + line + ') show\n').encode('latin_1')
             lineno += 1
     lineno = 0
     if lefttitle:
         for line in lefttitle.split('\n')[::-1]:
             oline = line
             line = sanitize(line)
-            ps += (str(int(plmargin * 72)) + ' ' + str((6 + lineno) * 12) + \
-                   ' moveto\n' + '(' + ') show\n').encode('latin_1')
+            ps += (str(plmargin * 72) + ' ' + str((6 + lineno) * 12) \
+                   + ' moveto\n' + '(' + line + ') show\n').encode('latin_1')
             lineno += 1
     if righttitle:
         for line in righttitle.split('\n')[::-1]:
             oline = line
             line = sanitize(line)
-            ps += (str(int(((plmargin + pwidth) - (len(oline) - 1) / 10) * \
-                   72)) + ' ' + str((6 + lineno) * 12) + ' moveto\n' + '(' + \
+            ps += (str(((plmargin + pwidth) - (len(oline) - 1) / 10) * \
+                   72) + ' ' + str((6 + lineno) * 12) + ' moveto\n' + '(' + \
                    line + ') show\n').encode('latin_1')
             lineno += 1
 
@@ -256,15 +258,18 @@ def elementstops(tpage, elements):
     pageno = 1
     skipblank = False
     nextlinepagebreak = False
+    cpagefull = False
     for i, element in enumerate(elements):
+        cpagefull = False
         if element.t == 'action' and element.txt[:3] == '===':
             nextlinepagebreak = True
         if nextlinepagebreak:
+            cpagefull = True
             page += 1
             if header:
                 htext = str(pageno) + '.'
-                ps += (str(int((8.5 - prmargin) * 72 - (len(htext) - 1) * \
-                       10)) + ' 744 moveto\n(' + htext + \
+                ps += (str((8.5 - prmargin) * 72 - (len(htext) - 1) * \
+                       10) + ' 744 moveto\n(' + htext + \
                        ') show\n').encode('latin_1')
                 pageno += 1
             ps += ('showpage\n%%Page: ' + str(page) + ' ' + str(page) + \
@@ -286,8 +291,8 @@ def elementstops(tpage, elements):
             nextlinepagebreak = True
         if element.t == 'center':
             for l in element.txt.split('\n'):
-                ps += (str(int((plmargin + ((pwidth - (len(l) * 5 / 36)) / \
-                       2)) * 72)) + ' ' + str(708 - line * 12) + \
+                ps += (str(round((plmargin + ((pwidth - (len(l) * 5 / 36)) / \
+                       2)), 1) * 72) + ' ' + str(708 - line * 12) + \
                        ' moveto\n(' + sanitize(l) + \
                        ') show\n').encode('latin_1')
                 line += 1
@@ -330,21 +335,22 @@ def elementstops(tpage, elements):
                 break
             if element.t == 'paren':
                 if j == 0:
-                    ps += (str(int((element.lmargin - 0.1) * 72)) + ' ' + \
+                    ps += (str((element.lmargin - 0.1) * 72) + ' ' + \
                            str(708 - (line * 12)) + \
                            ' moveto\n(\\() show\n').encode('latin_1')
                 if j == len(lines) - 1:
                     l += ')'
             l = sanitize(l)
-            ps += (str(int(element.lmargin * 72)) + ' ' + str(708 - line * \
+            ps += (str(element.lmargin * 72) + ' ' + str(708 - line * \
                    12) + ' moveto\n(' + l + ') show\n').encode('latin_1')
             line += 1
     page += 1
-    if header:
-        htext = str(pageno) + '.'
-        ps += (str(int((8.5 - prmargin) * 72 - (len(htext) - 1) * 10)) + \
-               ' 744 moveto\n(' + htext + ') show\n').encode('latin_1')
-    ps += 'showpage\n'.encode('latin_1')
+    if not cpagefull:
+        if header:
+            htext = str(pageno) + '.'
+            ps += (str((8.5 - prmargin) * 72 - (len(htext) - 1) * 10) + \
+                   ' 744 moveto\n(' + htext + ') show\n').encode('latin_1')
+        ps += 'showpage\n'.encode('latin_1')
     return ps
 
 def main():
