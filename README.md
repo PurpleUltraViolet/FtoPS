@@ -1,3 +1,8 @@
+# This repository has been archived.
+
+I'm finally getting around to archiving/deleting stuff I'll never touch again,
+and this is on the list.
+
 # FtoPS
 
 Interpreter for [Fountain](https://www.fountain.io) screenplay markup language
